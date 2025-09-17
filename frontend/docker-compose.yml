@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3005:3000"  # Host port 3005 mapped to container port 3000
+    environment:
+      - NEXT_TELEMETRY_DISABLED=1
+      - ESLINT_NO_DEV_ERRORS=1
+    command: ["npm", "run", "start"]  # Run the application using npm start

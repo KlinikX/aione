@@ -1,0 +1,44 @@
+name: Deploy Report and Build Docker
+
+on:
+  push:
+    branches:
+      - main  # run when pushing to main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # Build Docker image locally inside GitHub Actions runner
+      - name: Build Docker image
+        run: |
+          docker build --platform linux/amd64 -t linkedin-frontend:latest .
+          docker save linkedin-frontend:latest -o linkedin-frontend.tar
+          chmod 644 linkedin-frontend.tar
+
+      # Upload tar file to server
+      - name: Upload Docker image to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: 139.59.208.221
+          username: root
+          password: amitkapoor
+          source: "linkedin-frontend.tar"
+          target: "/root/"
+
+      # Load image and run container on server
+      - name: Load and Run Docker on server
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: 139.59.208.221
+          username: root
+          password: amitkapoor
+          script: |
+            docker load -i /root/linkedin-frontend.tar
+            docker stop linkedin-frontend || true
+            docker rm linkedin-frontend || true
+            docker run -d --name linkedin-frontend -p 3000:3000 --restart always linkedin-frontend:latest
